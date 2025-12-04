@@ -1,5 +1,6 @@
 from enum import Enum, auto
 import threading
+import time  # CHANGED: for latency timestamps
 
 
 class BotState(Enum):
@@ -16,9 +17,21 @@ class SharedState:
         self.barge_in = False
         self.stop_event = threading.Event()
 
-    def set_state(self, new_state: BotState):
+        # CHANGED: latency timestamps and per turn flag
+        self._last_asr_final_ts: float | None = None
+        self._last_tts_start_ts: float | None = None
+        self._tts_started_for_turn: bool = False
+
+    def set_state(self, new_state: BotState, reason: str | None = None):
         with self._lock:
+            old_state = self.state
             self.state = new_state
+
+        if old_state is not new_state:
+            if reason:
+                print(f"[State] {old_state.name} -> {new_state.name}: {reason}")
+            else:
+                print(f"[State] {old_state.name} -> {new_state.name}")
 
     def get_state(self) -> BotState:
         with self._lock:
@@ -33,3 +46,23 @@ class SharedState:
             val = self.barge_in
             self.barge_in = False
             return val
+
+    # CHANGED: mark ASR final and reset per turn TTS flag
+    def mark_asr_final(self):
+        with self._lock:
+            self._last_asr_final_ts = time.time()
+            self._tts_started_for_turn = False
+
+    # CHANGED: mark TTS start, but only log ASR -> sound once per turn
+    def mark_tts_start(self):
+        with self._lock:
+            now = time.time()
+            asr_ts = self._last_asr_final_ts
+            already_started = self._tts_started_for_turn
+            if not already_started:
+                self._tts_started_for_turn = True
+            self._last_tts_start_ts = now
+
+        if (not already_started) and (asr_ts is not None):
+            delta = now - asr_ts
+            print(f"[Latency] ASR final -> first sound: {delta*1000:.1f} ms")

@@ -64,7 +64,7 @@ class VADWorker:
                 continue
 
             energy = float(np.mean(frame ** 2))
-            
+
             baseline_energies.append(energy)
 
         if not baseline_energies:
@@ -97,10 +97,6 @@ class VADWorker:
 
             energy = float(np.mean(frame ** 2))
 
-            # Uncomment this if you want to see energies periodically:
-            # if np.random.rand() < 0.01:
-            #     print(f"[VAD DEBUG] energy={energy:.8f}")
-
             if energy > energy_threshold:
                 # speech-ish frame
                 if not is_speaking:
@@ -111,6 +107,8 @@ class VADWorker:
                             is_speaking = True
                             last_voice_time = time.time()
                             self.vad_events_q.put({"type": "voice_started", "ts": time.time()})
+                            # CHANGED: signal potential barge-in for main loop
+                            self.shared.trigger_barge_in()
                 else:
                     last_voice_time = time.time()
             else:

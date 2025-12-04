@@ -1,0 +1,12 @@
+# Python cache (any folder)
+__pycache__/
+*/__pycache__/
+
+# Local model files
+models/
+
+# Environment variables
+.env
+
+# macOS junk
+.DS_Store

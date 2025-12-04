@@ -3,3 +3,4 @@ numpy
 langchain
 langchain-community
 python-dotenv
+simpleaudio

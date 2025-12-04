@@ -9,19 +9,23 @@ from config import SAMPLE_RATE, BLOCK_SIZE
 
 
 class AudioInput:
-    """Long-lived microphone input that pushes frames into a queue."""
+    """Long-lived microphone input that pushes frames into one or more queues."""
 
-    def __init__(self, shared: SharedState, audio_q: queue.Queue):
+    def __init__(self, shared: SharedState, audio_queues: list[queue.Queue]):
         self.shared = shared
-        self.audio_q = audio_q
-        self.stream = None
+        self.audio_queues = audio_queues
         self.thread = None
 
     def _callback(self, indata, frames, time_info, status):
         if self.shared.stop_event.is_set():
             raise sd.CallbackAbort
-        # indata is (frames, channels)
-        self.audio_q.put(indata.copy())
+        frame = indata.copy()
+        for q in self.audio_queues:
+            try:
+                q.put_nowait(frame)
+            except queue.Full:
+                # Drop frame for this consumer if its queue is full
+                pass
 
     def start(self):
         def run():
