@@ -69,6 +69,16 @@ This allows overlapping ASR, LLM, TTS, and playback to achieve lowest possible l
 ```bash
 pip install -r requirements.txt
 ```
+Windows Audio Note
+
+If you're running this on Windows, run the pipeline from an Anaconda Prompt (or any terminal that exposes the correct audio devices).
+The sounddevice library occasionally fails to open the microphone when launched from PowerShell, VSCode terminal, or other shells on Windows.
+
+If you still get audio errors, verify:
+
+Your input/output audio devices are enabled
+
+The default input device is selected in Windows Sound Settings
 
 ### Configure environment
 
@@ -288,3 +298,4 @@ Use Pipecat or a reduced pipeline:
 * C++ backend
 * iOS CoreML conversion for all models
 * Android NNAPI for acceleration
+
